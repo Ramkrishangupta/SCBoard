@@ -1,0 +1,364 @@
+*{
+    padding: 0;
+    margin: 0;
+    box-sizing: border-box;
+    font-family: "Rubik",sans-serif;
+}
+body{
+    height: 100%;
+    background: linear-gradient(
+        to right,
+        #575ce5 50%,
+        #f9fbfc 50%
+    ) fixed;
+}
+.container{
+    background-color: #ffffff;
+    width: 400px;
+    padding: 50px;
+    position: absolute;
+    transform: translate(-50%,-50%);
+    top: 50%;
+    left: 50%;
+    box-shadow: 15px 30px 35px rgba(0,0,0,0.1);
+    border-radius: 10px;
+    -webkit-perspective: 300px;
+    perspective: 300px;
+}
+.heading {
+    text-align: center;
+    font-size: 28px;
+    font-weight: 600;
+    margin-bottom: 30px;
+    color: #101020;
+}
+
+.team-inputs {
+    margin: 0;
+    padding: 20px 0;
+}
+
+input[type="text"] {
+    width: 100%;
+    padding: 10px;
+    margin: 5px 0;
+    border-radius: 5px;
+    border: 1px solid #ccc;
+}
+
+#select-team-section button,
+#select-call-section button {
+    width: 140px;
+    padding: 10px 20px;
+    font-size: 16px;
+    font-weight: 500;
+    border: 2px solid #FFD700;
+    background-color: #111;
+    color: white;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    margin: 10px;
+}
+
+#select-team-section button:hover,
+#select-call-section button:hover {
+    background-color: #FFD700;
+    color: #111;
+    transform: scale(1.05);
+}
+
+#select-call-section {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+    margin-top: 20px;
+}
+
+.stats{
+    text-align: right;
+    color: #101020;
+    font-weight: 500;
+    line-height: 25px;
+}
+
+/* ✅ FIXED COIN STYLING */
+.coin{
+    height: 150px;
+    width: 150px;
+    position: relative;
+    margin: 50px auto;
+    -webkit-transform-style: preserve-3d;
+    transform-style: preserve-3d;
+    /* ✅ Remove any positioning that might conflict */
+    left: auto;
+    right: auto;
+    display: block;
+}
+
+.coin img{
+    width: 145px;
+}
+
+.heads,.tails{
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    -webkit-backface-visibility: hidden;
+    backface-visibility: hidden;
+}
+
+.tails{
+    transform: rotateX(180deg);
+}
+
+@keyframes spin-tails{
+    0%{
+        transform: rotateX(0);
+    }
+    100%{
+        transform: rotateX(1980deg);
+    }
+}
+
+@keyframes spin-heads{
+    0%{
+        transform: rotateX(0);
+    }
+    100%{
+        transform: rotateX(2160deg);
+    }
+}
+
+.buttons{
+    display: flex;
+    justify-content: space-between;
+}
+
+button{
+    width: 120px;
+    padding: 10px 0;
+    border: 2.5px solid #424ae0;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+#flip-button{
+    background-color: #101020;
+    color: #ffffff;
+}
+
+#flip-button:disabled{
+    background-color: #e1e0ee;
+    border-color: #e1e0ee;
+    color: #101020;
+}
+
+#flip-button:hover {
+    background-color: #353bb2;
+    transform: scale(1.05);
+}
+
+#reset-button{
+    background-color: #ffffff;
+    color: #424ae0;
+}
+
+.centered-toss-result {
+    position: absolute;
+    top: 40%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 24px;
+    color: #101020;
+    text-align: center;
+}
+
+body {
+    height: 100vh;
+    margin: 0;
+    font-family: "Rubik", sans-serif;
+    animation: gradientAnimation 8s ease-in-out infinite;
+    background: linear-gradient(135deg, #ffffff, #0008a5);
+    background-size: 400% 400%;
+}
+
+@keyframes gradientAnimation {
+    0% { background-position: 0% 100%; }
+    50% { background-position: 100% 0%; }
+    100% { background-position: 0% 100%; }
+}
+
+.container {
+    box-shadow: 15px 30px 35px rgba(0,0,0,0.15);
+    transform: translate(-50%, -50%);
+    background: linear-gradient(-135deg, #94b3ff, #ffffff);
+    background-size: 400% 400%;
+    animation: reverseGradient 8s ease-in-out infinite;
+    animation-delay: -4s;
+}
+
+section {
+  transition: opacity 0.4s ease-in-out, transform 0.4s ease;
+}
+
+.hide-section {
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(30px);
+}
+
+.show-section {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateY(0);
+}
+
+@keyframes reverseGradient {
+    0% { background-position: 100% 0%; }
+    50% { background-position: 0% 100%; }
+    100% { background-position: 100% 0%; }
+}
+
+#toss-result {
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: black;
+    text-align: center;
+    margin-top: 80px; 
+    transition: all 0.3s ease;
+}
+
+.toss-decision-btn {
+    background-color: #f5c518;
+    color: #000;
+    border: none;
+    padding: 10px 20px;
+    font-size: 1rem;
+    font-weight: bold;
+    border-radius: 8px;
+    cursor: pointer;
+    margin: 10px;
+    transition: background-color 0.3s, transform 0.2s;
+}
+  
+.toss-decision-btn:hover {
+    background-color: #e0b000;
+    transform: scale(1.05);
+}
+  
+.toss-decision-btn:active {
+    transform: scale(0.97);
+}
+
+#begin-match-wrapper {
+    display: none;
+    text-align: center;
+    margin-top: 20px;
+}
+
+#begin-match-wrapper button {
+    background-color: #1a1a1a;
+    color: #f4d03f;
+    border: 2px solid #f4d03f;
+    padding: 12px 24px;
+    font-size: 18px;
+    font-weight: bold;
+    text-transform: uppercase;
+    border-radius: 30px;
+    cursor: pointer;
+    transition: background-color 0.3s, transform 0.2s;
+    width: 250px;
+}
+
+#begin-match-wrapper button:hover {
+    background-color: #f4d03f;
+    color: #1a1a1a;
+    transform: scale(1.05);
+}
+
+#begin-match-wrapper button:active {
+    transform: scale(0.98);
+}
+@media (max-width: 600px) {
+    .container {
+        width: 90%;
+        padding: 20px;
+    }
+
+    .coin {
+        width: 100px !important;
+        height: 100px !important;
+        margin: 30px auto !important;
+        position: relative !important;
+        left: auto !important;
+        right: auto !important;
+        top: auto !important;
+        bottom: auto !important;
+        display: block !important;
+        /* ✅ REMOVED: transform: none !important; - यही problem था! */
+        /* ✅ Keep 3D transform for animations */
+        -webkit-transform-style: preserve-3d;
+        transform-style: preserve-3d;
+    }
+
+    .coin img {
+        width: 95px !important;
+    }
+
+    button {
+        width: 45%;
+        margin: 5px 0;
+    }
+
+    #toss-result {
+        font-size: 1.2rem;
+        margin-top: 40px;
+        text-align: center;
+    }
+
+    #batting-bowling-buttons {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .toss-decision-btn {
+        width: 80%;
+        max-width: 200px;
+    }
+
+    #begin-match-wrapper button {
+        width: 90%;
+        max-width: 250px;
+        font-size: 16px;
+    }
+}
+
+/* ✅ Extra small screens - ANIMATION PRESERVED */
+@media (max-width: 480px) {
+    .container {
+        width: 95%;
+        padding: 15px;
+    }
+
+    .coin {
+        width: 90px !important;
+        height: 90px !important;
+        margin: 25px auto !important;
+        /* ✅ NO transform blocking here either */
+        -webkit-transform-style: preserve-3d;
+        transform-style: preserve-3d;
+    }
+
+    .coin img {
+        width: 85px !important;
+    }
+
+    .heading {
+        font-size: 24px;
+        margin-bottom: 20px;
+    }
+}

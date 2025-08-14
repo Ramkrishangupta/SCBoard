@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ScoreBoard</title>
+    <link rel="icon" href="data:;base64,iVBORw0KGgo=">
+    <script src="/loginSystem/login.js"></script>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div id="scoreBoard">
+    <button id="open-settings" class="settings-icon">⚙️</button>
+    
+    <div class="score-header">
+      <h2>Scoreboard</h2>
+      <div class="match-info">
+        
+      </div>
+    </div>
+
+    <div class="teams-container">
+      <div class="team-card batting-team">
+        <h3 id="batting-team-name">Team A</h3>
+        <div class="score-display">
+          <span id="batting-score">0/0</span>
+          <span id="batting-overs">(0.0 ov)</span>
+        </div>
+      </div>
+
+      <div class="vs-divider">vs</div>
+
+      <div class="team-card bowling-team">
+        <h3 id="bowling-team-name">Team B</h3>
+        <div class="score-display">
+          <span id="bowling-score">-</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="match-stats">
+      <div class="stat-box">
+        <span class="stat-label">CRR</span>
+        <span id="current-rr" class="stat-value">0.00</span>
+      </div>
+      <div class="stat-box">
+        <span class="stat-label">Target</span>
+        <span id="target-score" class="stat-value">-</span>
+      </div>
+      <div class="stat-box">
+        <span class="stat-label">Extras</span>
+        <span id="extras" class="stat-value">0</span>
+      </div>
+    </div>
+
+    <div class="batsmen-container">
+      <div class="batsman-header">
+        <span>Batsman</span>
+        <span>R</span>
+        <span>B</span>
+        <span>4s</span>
+        <span>6s</span>
+        <span>SR</span>
+      </div>
+      <div class="batsman-row">
+        <span class="player-name" id="player1-name"></span>
+        <span class="runs">0</span>
+        <span class="balls">0</span>
+        <span class="fours">0</span>
+        <span class="sixes">0</span>
+        <span class="strike-rate">0</span>
+      </div>
+      <div class="batsman-row">
+        <span class="player-name" id="player2-name"></span>
+        <span class="runs">0</span>
+        <span class="balls">0</span>
+        <span class="fours">0</span>
+        <span class="sixes">0</span>
+        <span class="strike-rate">0</span>
+      </div>
+    </div>
+
+    <div class="bowlers-container">
+      <div class="bowler-header">
+        <span>Bowler</span>
+        <span>O</span>
+        <span>M</span>
+        <span>R</span>
+        <span>W</span>
+        <span>ER</span>
+      </div>
+      <div class="bowler-row">
+        <span class="player-name" id="bowler-name"></span>
+        <span class="overs">0</span>
+        <span class="maidens">0</span>
+        <span class="runs-conceded">0</span>
+        <span class="wickets">0</span>
+        <span class="economy">0</span>
+      </div>
+    </div>
+
+    <div class="controls">
+      <div class="runs-controls">
+        <button class="run-btn" data-runs="0">0</button>
+        <button class="run-btn" data-runs="1">1</button>
+        <button class="run-btn" data-runs="2">2</button>
+        <button class="run-btn" data-runs="3">3</button>
+        <button class="run-btn" data-runs="4">4</button>
+        <button class="run-btn" data-runs="6">6</button>
+      </div>
+      <div class="wicket-controls">
+        <button class="extra-btn" data-extra="wide">Wide</button>
+        <button id="overthrow-btn" class="extra-btn" style="display: none;">Overthrow</button>
+        <button class="wicket-btn">Wicket</button>
+        
+        <button class="extra-btn" data-extra="noball">No Ball</button>
+        <div class="runout-controls">
+            <button class="runout-btn">Run Out</button>
+            <button id="bowler-end-btn">Bowler End</button>
+            <button id="keeper-end-btn">Keeper End</button>
+        </div>
+        
+      </div>
+    </div>
+  </div>
+    <div id="settings-overlay">
+      <div class="settings-popup">
+        <h2>Match Settings</h2>
+        <label>
+          <input type="checkbox" id="wide-ball-include" checked />
+          Wide + 1
+        </label>
+        <label>
+          <input type="checkbox" id="no-ball-include" checked />
+          Noball + Freehit + 1
+        </label>
+        <label>
+          <input type="checkbox" id="no-ball-player-run" checked />
+          Noball  + Bathit + 1 (no freehit)
+        </label>
+        <label>
+          <input type="checkbox" id="noball-batsman-hit-only" checked />
+          Noball + Bathit (no freehit or no+1)
+        </label>
+        
+        <label>
+          <input type="checkbox" id="overthrow-include" checked />
+          Overthrow + run
+        </label>
+        <div class="settings-note">
+          <p><strong>Note:</strong> After throwing a ball you will not be able to <br> change the setting, so select it after confirming.</p>
+        </div>
+        
+        <button id="save-settings">Save</button>
+        
+      </div>
+    </div>
+    <div id="player-selection-popup" class="popup-overlay" style="display: none;">
+      <div class="popup-content">
+        <h3>Select Players</h3>
+
+        <div id="player-list-container"></div> <!-- For batsmen -->
+        <div id="bowler-list-container"></div> <!-- For bowler -->
+
+        <button id="confirm-player-selection">Start</button>
+      </div>
+    </div>
+    <!-- Match Complete Modal -->
+<div id="match-complete-modal" class="modal-overlay" style="display: none;">
+    <div class="modal-content match-complete-content">
+        <div class="match-result-header">
+            <div class="trophy-icon">🏆</div>
+            <h2>Match Complete!</h2>
+            <div id="match-result-text" class="result-text"></div>
+        </div>
+        
+        <div class="modal-options">
+            <button class="option-btn home-btn" onclick="navigateToHome()">
+                <i class="fas fa-home"></i>
+                <span>Back to Home</span>
+            </button>
+            
+            <button class="option-btn next-match-btn" onclick="showNextMatchOptions()">
+                <i class="fas fa-play"></i>
+                <span>Play Next Match</span>
+            </button>
+            
+            <button class="option-btn history-btn" onclick="navigateToHistory()">
+                <i class="fas fa-history"></i>
+                <span>Go to History</span>
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Next Match Options Modal -->
+<div id="next-match-options-modal" class="modal-overlay" style="display: none;">
+    <div class="modal-content next-match-content">
+        <h3>🔄 Start Next Match</h3>
+        <p>Choose how to start the next match:</p>
+        
+        <div class="next-match-options">
+            <button class="next-option-btn winner-bats-btn" onclick="startNextMatch('winnerBats')">
+                <i class="fas fa-trophy"></i>
+                <span>Winner Bats First</span>
+                <small id="winner-team-name">Winner Team</small>
+            </button>
+            
+            <button class="next-option-btn toss-btn" onclick="startNextMatch('fromToss')">
+                <i class="fas fa-coins"></i>
+                <span>From Toss</span>
+                <small>Virtual coin toss</small>
+            </button>
+            
+            <button class="next-option-btn fresh-start-btn" onclick="startNextMatch('fromBeginning')">
+                <i class="fas fa-redo"></i>
+                <span>From Beginning</span>
+                <small>Team & player selection</small>
+            </button>
+        </div>
+        
+        <button class="back-btn" onclick="backToMatchComplete()">
+            <i class="fas fa-arrow-left"></i> Back
+        </button>
+    </div>
+</div>
+
+  <script type="module">
+    // ✅ Import statements at top level of module
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-app.js";
+    import { getAuth } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-auth.js";
+
+    // Firebase configuration
+    const firebaseConfig = {
+        apiKey: "AIzaSyAjDrhV_xsfta2oo85Oi9owmGC6UH3my28",
+        authDomain: "scboard-e36a4.firebaseapp.com",
+        projectId: "scboard-e36a4",
+        storageBucket: "scboard-e36a4.firebasestorage.app",
+        messagingSenderId: "896640295836",
+        appId: "1:896640295836:web:282eb3b625e7e05070de59",
+        measurementId: "G-JW47M9LDHL"
+    };
+
+    console.log("🔥 Initializing Firebase for scoreboard...");
+    
+    // Initialize Firebase
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+
+    // ✅ Make auth available globally
+    window.firebaseAuth = auth;
+    window.firebaseApp = app;
+
+    console.log("✅ Firebase initialized for scoreboard");
+    
+    // ✅ Dispatch ready event
+    window.dispatchEvent(new CustomEvent('firebaseReady'));
+</script>
+
+<!-- 2. Main Application Initialization Script -->
+<script>
+    // ✅ Wait for DOM and Firebase to be ready
+    document.addEventListener('DOMContentLoaded', function() {
+        console.log("📄 DOM loaded for scoreboard");
+        
+        // Wait for Firebase to be ready
+        const initializeWhenReady = () => {
+            if (window.firebaseAuth) {
+                console.log("🎯 Firebase ready, initializing scoreboard...");
+                try {
+                    initializeApp();
+                } catch (error) {
+                    console.error("❌ Scoreboard initialization error:", error);
+                    alert("Error loading scoreboard. Please try again.");
+                }
+            } else {
+                console.log("⏳ Waiting for Firebase...");
+                setTimeout(initializeWhenReady, 100);
+            }
+        };
+
+        // Start initialization
+        setTimeout(initializeWhenReady, 200);
+    });
+
+    // ✅ Listen for Firebase ready event
+    window.addEventListener('firebaseReady', () => {
+        console.log("📡 Firebase ready event received");
+    });
+</script>
+
+<!-- 3. Your Application Scripts -->
+<script src="script.js"></script>
+<script src="noball.js"></script>
+<script src="/notifications.js"></script>
+</body>
+</html>
+
+

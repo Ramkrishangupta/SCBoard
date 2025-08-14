@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Flip A Coin</title>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;500&display=swap" rel="stylesheet" />
+    <!-- Stylesheet -->
+    <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+    <div class="container">
+        <h1 class="heading">Make Your Call</h1>
+
+        <!-- Step 1: Select Toss Calling Team -->
+        <div id="select-team-section">
+            <p>Select team to make call:</p>
+            <button id="call-team-a">Loading...</button>
+            <button id="call-team-b">Loading...</button>
+        </div>
+
+        <!-- Step 2: Select Heads or Tails (Initially Hidden) -->
+        <div id="select-call-section" style="display: none;">
+            <p id="toss-calling-team-name"></p>
+            <p>Select your call:</p>
+            <button id="call-heads">Heads</button>
+            <button id="call-tails">Tails</button>
+        </div>
+
+        <!-- Coin Flip Area -->
+        <div class="coin" id="coin">
+            <div class="heads">
+                <img src="heads.svg" alt="Heads" />
+            </div>
+            <div class="tails">
+                <img src="tails.svg" alt="Tails" />
+            </div>
+        </div>
+
+        <!-- Flip and Reset Buttons -->
+        <div class="buttons">
+            <button id="flip-button" disabled>Flip Coin</button>
+            <button id="reset-button">Again</button>
+        </div>
+
+        <!-- Toss Result -->
+        <p id="toss-result" style="text-align: center; font-weight: bold; margin-top: 20px; display:none;"></p>
+
+        <!-- Batting and Bowling buttons (Initially Hidden) -->
+        <div id="batting-bowling-buttons" style="display: none; text-align: center; margin-top: 20px;">
+            <button class="toss-decision-btn" id="choose-batting">Batting</button>
+            <button class="toss-decision-btn" id="choose-bowling">Bowling</button>
+        </div>
+
+        <!-- Begin Match Button (Initially Hidden) -->
+        <div id="begin-match-wrapper" style="display: none; text-align: center; margin-top: 30px;">
+            <button class="toss-decision-btn" id="begin-match-btn">Begin Match</button>
+        </div>
+    </div>
+
+    <!-- Toss Page -->
+    <section id="toss-page"></section>
+
+    <!-- Match Setup Page (Initially hidden) -->
+    <section id="match-setup-page" style="display: none;"></section>
+
+    <!-- Script -->
+    <script src="script.js"></script>
+    <script src="/notifications.js"></script>
+</body>
+</html>

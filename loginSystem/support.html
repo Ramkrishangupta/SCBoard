@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Support - SCBoard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: 'Rubik', sans-serif;
+            background: linear-gradient(135deg, #575ce5 0%, #4e54c8 50%, #2c2f5a 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .support-container {
+            max-width: 700px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            padding: 40px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            animation: slideUp 0.8s ease-out;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+        
+        .header h1 {
+            color: #575ce5;
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+        
+        .faq-section {
+            margin: 30px 0;
+        }
+        
+        .faq-item {
+            background: #f8fafc;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 15px 0;
+            border-left: 4px solid #575ce5;
+        }
+        
+        .faq-question {
+            font-weight: 600;
+            color: #1e293b;
+            margin-bottom: 10px;
+        }
+        
+        .faq-answer {
+            color: #475569;
+            line-height: 1.6;
+        }
+        
+        .contact-section {
+            background: #f0f4ff;
+            border-radius: 12px;
+            padding: 30px;
+            text-align: center;
+            margin: 30px 0;
+        }
+        
+        .back-section {
+            text-align: center;
+            margin-top: 30px;
+        }
+        
+        .back-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px 24px;
+            background: #575ce5;
+            color: white;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        
+        .back-btn:hover {
+            background: #4338ca;
+            transform: translateY(-2px);
+        }
+        
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body>
+    <div class="support-container">
+        <div class="header">
+            <h1><i class="fas fa-life-ring"></i> Support Center</h1>
+            <p>Get help with SCBoard</p>
+        </div>
+        
+        <div class="faq-section">
+            <h2>Frequently Asked Questions</h2>
+            
+            <div class="faq-item">
+                <div class="faq-question">How do I create a new match?</div>
+                <div class="faq-answer">Click "Start New Match" from the homepage, enter team names, add players, and begin scoring!</div>
+            </div>
+            
+            <div class="faq-item">
+                <div class="faq-question">Can I access my matches from different devices?</div>
+                <div class="faq-answer">Yes! Create an account and your match history will sync across all your devices.</div>
+            </div>
+            
+            <div class="faq-item">
+                <div class="faq-question">How do I handle no-balls and wides?</div>
+                <div class="faq-answer">Use the "No Ball" and "Wide" buttons during scoring. You can customize the rules in Settings.</div>
+            </div>
+            
+            <div class="faq-item">
+                <div class="faq-question">Can I export my match data?</div>
+                <div class="faq-answer">Yes! Visit your match history and use the export feature to download your data.</div>
+            </div>
+        </div>
+        
+        <div class="contact-section">
+            <h3><i class="fas fa-envelope"></i> Need More Help?</h3>
+            <p>This is an educational project. For technical issues or feature requests, please check the project documentation or contact the developer.</p>
+        </div>
+        
+        <div class="back-section">
+            <a href="javascript:window.close()" class="back-btn">
+                <i class="fas fa-arrow-left"></i>
+                Close Window
+            </a>
+        </div>
+    </div>
+</body>
+</html>

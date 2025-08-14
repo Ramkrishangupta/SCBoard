@@ -1,0 +1,298 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    min-height: 100vh;
+    padding: 20px;
+    color: #374151;
+}
+
+/* ✅ REMOVED: Heavy background animations and pseudo-elements */
+
+/* Main Container - Clean and Simple */
+.scorecard-container {
+    max-width: 1000px;
+    margin: 0 auto;
+    background: rgba(255, 255, 255, 0.95);
+    border-radius: 16px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+/* Header Section - History Page Style */
+.match-header {
+    background: linear-gradient(135deg, #575ce5 0%, #4338ca 100%);
+    color: white;
+    padding: 30px 25px;
+    text-align: center;
+}
+
+.match-header h1 {
+    font-size: 2.2rem;
+    font-weight: 700;
+    margin-bottom: 8px;
+    letter-spacing: 0.5px;
+}
+
+.match-subtitle {
+    font-size: 1rem;
+    opacity: 0.9;
+    font-weight: 500;
+}
+
+/* Match Result - Clean Green Theme */
+.match-result {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    color: white;
+    padding: 25px;
+    text-align: center;
+    font-weight: 700;
+    font-size: 1.5rem;
+}
+
+/* ✅ REMOVED: Heavy pulse animations */
+
+/* Match Details - Clean Layout */
+.match-details {
+    display: flex;
+    flex-wrap: wrap;
+    padding: 25px;
+    background: rgba(248, 250, 252, 0.9);
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.detail-box {
+    flex: 1;
+    min-width: 200px;
+    padding: 15px;
+    text-align: center;
+    position: relative;
+}
+
+.detail-box::after {
+    content: '';
+    position: absolute;
+    right: 0;
+    top: 20%;
+    height: 60%;
+    width: 1px;
+    background: #d1d5db;
+}
+
+.detail-box:last-child::after {
+    display: none;
+}
+
+.detail-label {
+    font-weight: 600;
+    color: #575ce5;
+    margin-bottom: 8px;
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.detail-box div:last-child {
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: #1f2937;
+}
+
+/* Score Summary - Clean Blue Theme */
+#score-summary {
+    background: linear-gradient(135deg, #e0f2fe 0%, #f0f9ff 100%) !important;
+    border: 2px solid #0ea5e9 !important;
+    margin: 20px;
+    border-radius: 12px;
+}
+
+/* Innings Sections - Simple and Clean */
+.innings-section {
+    padding: 30px 25px;
+    border-bottom: 1px solid #e5e7eb;
+    background: rgba(255, 255, 255, 0.9);
+}
+
+.innings-section:nth-child(even) {
+    background: rgba(249, 250, 251, 0.9);
+}
+
+.section-title {
+    background: linear-gradient(135deg, #575ce5 0%, #4338ca 100%);
+    color: white;
+    padding: 15px 20px;
+    font-weight: 700;
+    font-size: 1.3rem;
+    border-radius: 10px;
+    margin-bottom: 20px;
+    text-align: center;
+    box-shadow: 0 4px 15px rgba(87, 92, 229, 0.2);
+}
+
+/* Modern Clean Table Styling */
+.stats-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    margin: 15px 0;
+    background: white;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+}
+
+.stats-table th {
+    background: linear-gradient(135deg, #575ce5 0%, #4338ca 100%);
+    color: white;
+    padding: 16px 12px;
+    text-align: center;
+    font-weight: 600;
+    font-size: 0.95rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.stats-table th:first-child {
+    text-align: left;
+}
+
+.stats-table td {
+    padding: 14px 12px;
+    border-bottom: 1px solid #f3f4f6;
+    text-align: center;
+    font-size: 1rem;
+    transition: background-color 0.2s ease;
+}
+
+.stats-table td:first-child {
+    text-align: left;
+    font-weight: 600;
+    color: #1f2937;
+}
+
+.stats-table tr:hover td {
+    background: #f0f9ff;
+}
+
+/* Player Names */
+.player-name {
+    font-weight: 700;
+    color: #1f2937;
+    font-size: 1rem;
+}
+
+/* Status Indicators - Clean Design */
+.not-out {
+    background: linear-gradient(135deg, #10b981, #059669);
+    color: white;
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+
+.out {
+    background: linear-gradient(135deg, #ef4444, #dc2626);
+    color: white;
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+
+/* DNB Players - Clean Yellow Theme */
+.dnb-header td {
+    background: #fef3c7 !important;
+    color: #92400e;
+    font-weight: 700;
+    text-align: center !important;
+    font-size: 1rem;
+}
+
+.dnb-row td {
+    background: #fefce8 !important;
+    color: #a16207;
+    font-style: italic;
+    text-align: center !important;
+}
+
+/* Man of the Match - Clean Gold Theme */
+#man-of-the-match {
+    background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+    color: white;
+    padding: 15px;
+    border-radius: 10px;
+    text-align: center;
+    font-weight: 600;
+    font-size: 1.1rem;
+    margin: 15px 0;
+    box-shadow: 0 4px 15px rgba(251, 191, 36, 0.3);
+}
+
+/* ✅ REMOVED: Heavy animations like fadeIn, pulse, etc. */
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .scorecard-container {
+        margin: 10px;
+        border-radius: 12px;
+    }
+    
+    .match-header h1 {
+        font-size: 1.8rem;
+    }
+    
+    .match-details {
+        flex-direction: column;
+        padding: 20px;
+    }
+    
+    .detail-box::after {
+        display: none;
+    }
+    
+    .stats-table th,
+    .stats-table td {
+        padding: 10px 8px;
+        font-size: 0.9rem;
+    }
+    
+    .section-title {
+        font-size: 1.1rem;
+        padding: 12px 15px;
+    }
+}
+
+@media (max-width: 480px) {
+    .match-header h1 {
+        font-size: 1.5rem;
+    }
+    
+    .match-result {
+        font-size: 1.2rem;
+        padding: 20px 15px;
+    }
+    
+    .stats-table th,
+    .stats-table td {
+        padding: 8px 6px;
+        font-size: 0.85rem;
+    }
+}
+
+/* Simple hover effects only */
+.detail-box:hover {
+    transform: translateY(-1px);
+    transition: transform 0.2s ease;
+}
+
+.stats-table tr:hover {
+    transform: none; /* Removed heavy scale transforms */
+}

@@ -1,0 +1,242 @@
+
+body {
+    font-family: 'Rubik', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+    margin: 0;
+    padding: 20px;
+    min-height: 100vh;
+}
+
+.container {
+    max-width: 900px;
+    margin: 0 auto;
+}
+
+h1 {
+    text-align: center;
+    color: #575ce5;
+    margin-bottom: 30px;
+    font-size: 2.5rem;
+    font-weight: 700;
+}
+
+.match-card {
+    background: white;
+    border-radius: 15px;
+    padding: 25px;
+    margin-bottom: 25px;
+    box-shadow: 0 4px 20px rgba(87, 92, 229, 0.1);
+    cursor: pointer;
+    transition: all 0.3s ease;
+    border: 1px solid rgba(87, 92, 229, 0.1);
+    position: relative;
+    overflow: hidden;
+}
+
+.match-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 4px;
+    background: linear-gradient(90deg, #575ce5, #ffd700);
+}
+
+.match-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 30px rgba(87, 92, 229, 0.2);
+    border-color: #575ce5;
+}
+
+.match-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 20px;
+}
+
+.match-title h3 {
+    color: #575ce5;
+    margin: 0 0 10px 0;
+    font-size: 1.4rem;
+    font-weight: 700;
+}
+
+.match-badges {
+    display: flex;
+    gap: 8px;
+}
+
+.badge {
+    background: linear-gradient(135deg, #ffd700, #ffed4a);
+    color: #7c2d12;
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+.match-date {
+    text-align: right;
+    color: #666;
+}
+
+.date {
+    font-weight: 600;
+    color: #374151;
+}
+
+.time {
+    font-size: 0.9rem;
+    color: #6b7280;
+}
+
+.toss-info {
+    background: #f8fafc;
+    padding: 10px 15px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    color: #475569;
+    font-size: 0.95rem;
+    border-left: 3px solid #ffd700;
+}
+
+.toss-info i {
+    margin-right: 8px;
+    color: #ffd700;
+}
+
+.match-score {
+    margin-bottom: 20px;
+}
+
+.innings {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 0;
+    border-bottom: 1px solid #f1f5f9;
+}
+
+.innings:last-child {
+    border-bottom: none;
+}
+
+.innings.pending {
+    opacity: 0.6;
+    font-style: italic;
+}
+
+.team-name {
+    font-weight: 700;
+    color: #1e293b;
+    font-size: 1.1rem;
+}
+
+.score-info {
+    text-align: right;
+}
+
+.score {
+    font-weight: 700;
+    font-size: 1.2rem;
+    color: #575ce5;
+    margin-right: 10px;
+}
+
+.overs {
+    color: #6b7280;
+    font-size: 0.9rem;
+}
+
+.target {
+    display: block;
+    color: #dc2626;
+    font-size: 0.85rem;
+    font-weight: 600;
+    margin-top: 5px;
+}
+
+.match-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-top: 15px;
+    border-top: 1px solid #f1f5f9;
+    flex-wrap: wrap;
+    gap: 15px;
+}
+
+.match-result {
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.match-result i {
+    color: #ffd700;
+}
+
+.match-motm {
+    color: #7c2d12;
+    background: #fef7ed;
+    padding: 8px 12px;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.match-motm i {
+    color: #ffd700;
+}
+
+.card-action {
+    text-align: center;
+    margin-top: 15px;
+    padding-top: 15px;
+    border-top: 1px solid #f1f5f9;
+    color: #6b7280;
+    font-size: 0.9rem;
+}
+
+.card-action i {
+    margin-right: 6px;
+    color: #575ce5;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .match-header {
+        flex-direction: column;
+        gap: 15px;
+    }
+    
+    .match-footer {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    
+    .innings {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+    }
+    
+    .score-info {
+        text-align: left;
+    }
+}
+
+/* Loading animation */
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.fa-spin {
+    animation: spin 1s linear infinite;
+}

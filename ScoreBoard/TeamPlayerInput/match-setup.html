@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Match Setup</title>
+  <link rel="stylesheet" href="match-setup.css" />
+</head>
+<body>
+  <div class="setup-container">
+    <h1>Match Configuration</h1>
+
+    <!-- Overs selection -->
+    <div class="form-group">
+      <label>Number of Overs:</label>
+      <div class="overs-input-container">
+        <select id="overs-presets" class="form-control">
+          <option value="custom">Custom</option>
+          <option value="1">1 Over</option>
+          <option value="6">6 Overs</option>
+          <option value="10">10 Overs</option>
+          <option value="15">15 Overs</option>
+          <option value="20">20 Overs</option>
+        </select>
+        <input type="number" id="overs-custom" 
+               min="1" max="50" 
+               placeholder="Enter any value"
+               class="form-control" style="display:none;" />
+      </div>
+      <small class="hint">Select from presets or choose "Custom"</small>
+    </div>
+
+    <!-- Player count selection -->
+    <div class="form-group">
+      <label>Players Per Team:</label>
+      <div class="input-container">
+        <select id="players-presets" class="form-control">
+          <option value="custom">Custom</option>
+          <option value="2">2 Players</option>
+          <option value="4">4 Players</option>
+          <option value="6">6 Players</option>
+          <option value="8">8 Players</option>
+          <option value="11">11 Players</option>
+        </select>
+        <input type="number" id="players-custom" 
+               min="2" max="12" 
+               placeholder="Enter (2-12)"
+               class="form-control" style="display:none;" />
+      </div>
+      <small class="hint">Select from presets or choose "Custom"</small>
+    </div>
+
+    <!-- Team player inputs -->
+    <div class="teams-container">
+      <div class="team-input" id="batting-team-inputs">
+        <h2 id="batting-team-name"></h2>
+      </div>
+
+      <div class="team-input" id="bowling-team-inputs">
+        <h2 id="bowling-team-name"></h2>
+      </div>
+    </div>
+
+    <button id="start-match" class="btn-submit">Begin Match</button>
+  </div>
+
+  <script src="match-setup.js"></script>
+  <script src="/notifications.js"></script>
+</body>
+</html>
