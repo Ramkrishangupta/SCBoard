@@ -1,35 +1,132 @@
-
-function initializeFirebaseForHome() {
+async function initializeFirebaseForHome() {
     if (typeof window.firebaseAuth === 'undefined') {
-        console.log("🔥 Initializing Firebase for home page...");
         
-        // Use dynamic import to avoid module conflicts
-        import("https://www.gstatic.com/firebasejs/11.10.0/firebase-app.js")
-            .then(({ initializeApp }) => {
-                return import("https://www.gstatic.com/firebasejs/11.10.0/firebase-auth.js")
-                    .then(({ getAuth }) => {
-                        const firebaseConfig = {
-                            apiKey: "AIzaSyAjDrhV_xsfta2oo85Oi9owmGC6UH3my28",
-                            authDomain: "scboard-e36a4.firebaseapp.com",
-                            projectId: "scboard-e36a4",
-                            storageBucket: "scboard-e36a4.firebasestorage.app",
-                            messagingSenderId: "896640295836",
-                            appId: "1:896640295836:web:282eb3b625e7e05070de59",
-                            measurementId: "G-JW47M9LDHL"
-                        };
-                        
-                        const app = initializeApp(firebaseConfig);
-                        window.firebaseAuth = getAuth(app);
-                        window.firebaseApp = app;
-                        
-                        console.log("✅ Firebase initialized for home page");
-                    });
-            })
-            .catch(error => {
-                console.warn("⚠️ Firebase initialization failed for home page:", error);
+        try {
+            const { initializeApp } = await import("https://www.gstatic.com/firebasejs/11.10.0/firebase-app.js");
+            const { getAuth, onAuthStateChanged } = await import("https://www.gstatic.com/firebasejs/11.10.0/firebase-auth.js");
+            
+            const firebaseConfig = {
+                apiKey: "AIzaSyAjDrhV_xsfta2oo85Oi9owmGC6UH3my28",
+                authDomain: "scboard-e36a4.firebaseapp.com",
+                projectId: "scboard-e36a4",
+                storageBucket: "scboard-e36a4.firebasestorage.app",
+                messagingSenderId: "896640295836",
+                appId: "1:896640295836:web:282eb3b625e7e05070de59",
+                measurementId: "G-JW47M9LDHL"
+            };
+            
+            const app = initializeApp(firebaseConfig);
+            window.firebaseAuth = getAuth(app);
+            window.firebaseApp = app;
+            
+            let isProcessing = false;
+            
+            onAuthStateChanged(window.firebaseAuth, async (user) => {
+                if (isProcessing) return;
+                isProcessing = true;
+                
+                if (user) {
+                    localStorage.setItem('userId', user.uid);
+                    localStorage.setItem('userMode', 'authenticated');
+                    localStorage.setItem('userEmail', user.email);
+                    localStorage.setItem('loginTimestamp', Date.now().toString());
+                    
+                    await fetchAndSetUserName(user);
+                    updateUserNavigation(true);
+                } else {
+                    const sessionStatus = checkLocalSessionValidity();
+                    if (!sessionStatus) {
+                        cleanupExpiredSession();
+                        updateUserNavigation(false);
+                    }
+                }
+                
+                isProcessing = false;
             });
+            
+            console.log(" Firebase initialized for home page");
+            
+        } catch (error) {
+            console.warn(" Firebase initialization failed for home page:", error);
+        }
     } else {
-        console.log("🔥 Firebase already initialized");
+        console.log(" Firebase already initialized");
+    }
+}
+
+async function fetchAndSetUserName(user) {
+    
+    const existingName = localStorage.getItem('userName');
+    
+    if (existingName && !existingName.includes('@') && !existingName.includes('gmail')) {
+        console.log(" Using existing valid name:", existingName);
+        return;
+    }
+    
+}
+
+function checkLocalSessionValidity() {
+    const userId = localStorage.getItem('userId');
+    const userMode = localStorage.getItem('userMode');
+    const loginTimestamp = localStorage.getItem('loginTimestamp');
+    
+    if (userMode === 'authenticated' && userId && loginTimestamp) {
+        const currentTime = Date.now();
+        const sessionDuration = 7 * 24 * 60 * 60 * 1000;
+        
+        if ((currentTime - parseInt(loginTimestamp)) < sessionDuration) {
+            return true;
+        }
+    }
+    return false;
+}
+
+async function fetchUserNameFromDatabase(userId) {
+    if (!window.firebaseAuth || !window.firebaseAuth.currentUser) {
+        console.log(" No authenticated user found");
+        return;
+    }
+    
+    try {
+        const idToken = await window.firebaseAuth.currentUser.getIdToken(true);
+        const response = await fetch(`https://scboard-e36a4-default-rtdb.firebaseio.com/users/${userId}.json?auth=${idToken}`);
+        const userData = await response.json();
+        
+        if (userData && userData.name) {
+            localStorage.setItem('userName', userData.name);
+            updateUserNavigation(true);
+            console.log(" User name refreshed:", userData.name);
+        }
+    } catch (error) {
+        console.error(" Error refreshing user name:", error);
+    }
+}
+
+function updateUserNavigation(isAuthenticated) {
+    const loginLink = document.getElementById('loginLink');
+    if (!loginLink) return;
+
+    if (isAuthenticated) {
+        const userName = localStorage.getItem('userName') || 'User';
+        
+        let displayName;
+        if (userName.includes('@')) {
+            displayName = userName.split('@')[0];
+        } else {
+            displayName = userName;
+        }
+        
+        const firstName = displayName.split(' ')[0];
+
+        loginLink.innerHTML = `
+          <a href="#" onclick="showUserMenu(event)" class="user-link">
+            <i class="fas fa-user-circle"></i> ${firstName}
+          </a>`;
+    } else {
+        loginLink.innerHTML = `
+          <a class="nav-link" href="/loginSystem/login.html">
+            Login / Sign Up
+          </a>`;
     }
 }
 
@@ -38,79 +135,28 @@ initializeFirebaseForHome();
 window.onload = async function() {
     showLoadingOverlay();
     
-    const sessionStatus = await validateUserSession();
+    const hasValidLocalSession = checkLocalSessionValidity();
     
-    if (sessionStatus === 'expired') {
-        hideLoadingOverlay();
-        cleanupExpiredSession();
-        showSessionExpiredNotification();
-        updateUIForLoggedOutState();
-        return;
-    }
-    
-    if (sessionStatus === true) {
+    if (hasValidLocalSession) {
         hideLoadingOverlay();
         initializeHomePage();
+        updateUserNavigation(true);
     } else {
-        hideLoadingOverlay();
-        initializeHomePage();
+        setTimeout(() => {
+            hideLoadingOverlay();
+            initializeHomePage();
+            const userMode = localStorage.getItem('userMode');
+            updateUserNavigation(userMode === 'authenticated');
+        }, 1500);
     }
 };
 
-// ✅ Enhanced validateUserSession function (Add this)
-async function validateUserSession() {
-    const userId = localStorage.getItem('userId');
-    const userMode = localStorage.getItem('userMode');
-    const loginTimestamp = localStorage.getItem('loginTimestamp');
-    
-    // Check if user has ever been authenticated
-    if (!userId && !userMode) {
-        console.log("👤 New user - no authentication check needed");
-        return true;
-    }
-    
-    // If user was authenticated before, validate session
-    if (userMode === 'authenticated' && userId) {
-        // Session expiry check (24 hours)
-        const currentTime = Date.now();
-        const sessionDuration = 24 * 60 * 60 * 1000; // 24 hours
-        
-        if (loginTimestamp && (currentTime - parseInt(loginTimestamp)) > sessionDuration) {
-            console.log("⏰ Session expired for authenticated user");
-            return 'expired';
-        }
-        
-        try {
-            // Verify user still exists in Firebase
-            const userCheckUrl = `https://scboard-e36a4-default-rtdb.firebaseio.com/users/${userId}.json`;
-            const response = await fetch(userCheckUrl);
-            
-            if (!response.ok || !await response.json()) {
-                console.log("❌ User not found in database");
-                return 'expired';
-            }
-            
-            console.log("✅ Valid authenticated session");
-            return true;
-            
-        } catch (error) {
-            console.error("❌ Session validation failed:", error);
-            return 'expired';
-        }
-    }
-    
-    console.log("👻 Guest user - allow access");
-    return true;
-}
-
-// ✅ Session cleanup function (Add this)
 function cleanupExpiredSession() {
     ['userMode', 'userId', 'userName', 'loginTimestamp', 'userEmail']
         .forEach(key => localStorage.removeItem(key));
-    console.log("🧹 Expired session cleaned up");
+    console.log("🧹 Session cleaned up");
 }
 
-// ✅ Loading overlay functions (Add these)
 function showLoadingOverlay() {
     window.originalBodyContent = document.body.innerHTML;
     
@@ -152,10 +198,6 @@ function showLoadingOverlay() {
                 40% { transform: translateY(-10px); }
                 60% { transform: translateY(-5px); }
             }
-            @keyframes slideInRight {
-                from { transform: translateX(100%); opacity: 0; }
-                to { transform: translateX(0); opacity: 1; }
-            }
         </style>
     `;
 }
@@ -171,58 +213,11 @@ function hideLoadingOverlay() {
     }
 }
 
-// ✅ Session expired notification (Add this)
-function showSessionExpiredNotification() {
-    const notification = document.createElement('div');
-    notification.style.cssText = `
-        position: fixed;
-        top: 20px;
-        right: 20px;
-        background: linear-gradient(135deg, #f59e0b, #d97706);
-        color: white;
-        padding: 20px 25px;
-        border-radius: 12px;
-        box-shadow: 0 10px 25px rgba(245, 158, 11, 0.3);
-        z-index: 10000;
-        font-weight: 600;
-        max-width: 350px;
-        animation: slideInRight 0.5s ease;
-    `;
-    
-    notification.innerHTML = `
-        <div style="display: flex; align-items: center; gap: 12px;">
-            <i class="fas fa-clock" style="font-size: 1.2rem;"></i>
-            <div>
-                <div style="font-size: 1rem; margin-bottom: 5px;">Session Expired</div>
-                <div style="font-size: 0.85rem; opacity: 0.9;">Please login again to access your features</div>
-            </div>
-            <button onclick="this.parentElement.parentElement.remove()" style="
-                background: rgba(255,255,255,0.2);
-                border: none;
-                color: white;
-                width: 24px;
-                height: 24px;
-                border-radius: 50%;
-                cursor: pointer;
-                font-size: 14px;
-            ">×</button>
-        </div>
-    `;
-    
-    document.body.appendChild(notification);
-    
-    setTimeout(() => {
-        if (notification.parentNode) {
-            notification.remove();
-        }
-    }, 5000);
-}
-
 function updateUIForLoggedOutState() {
     const loginLink = document.getElementById('loginLink');
     if (loginLink) {
         loginLink.innerHTML = `
-            <a class="nav-link" href="loginSystem/login.html" style="
+            <a class="nav-link" href="/loginSystem/login.html" style="
                 background: linear-gradient(135deg, #575ce5, #4338ca);
                 color: white;
                 padding: 8px 16px;
@@ -244,8 +239,6 @@ function updateUIForLoggedOutState() {
     }
 }
 
-
-// ✅ Your existing initializeHomePage function
 function initializeHomePage() {
     AOS.init({
         duration: 800,
@@ -298,7 +291,6 @@ function initializeHomePage() {
         });
     });
 
-    // ✅ Removed DOMContentLoaded - moved inside initializeHomePage
     const urlParams = new URLSearchParams(window.location.search);
     const fromMatch = urlParams.get('from');
     
@@ -329,7 +321,6 @@ function initializeHomePage() {
         });
     });
 
-    // CSS styles
     const style = document.createElement('style');
     style.textContent = `
         .btn {
@@ -355,13 +346,11 @@ function initializeHomePage() {
     `;
     document.head.appendChild(style);
 
-    // ✅ Call authentication check and UI setup
     console.log('DOM loaded, checking authentication...');
     checkUserAuthAndShowNav();
     updateFeatureCards();
 }
 
-// ✅ Keep your existing functions with fixes
 function checkUserAuthAndShowNav() {
     const userMode = localStorage.getItem('userMode');
     const userId = localStorage.getItem('userId');
@@ -376,26 +365,6 @@ function checkUserAuthAndShowNav() {
         if (historyLink) historyLink.style.display = 'none';
         if (loginLink) loginLink.style.display = 'block';
         updateUserNavigation(false);
-    }
-}
-
-function updateUserNavigation(isAuthenticated) {
-    const loginLink = document.getElementById('loginLink');
-    if (!loginLink) return;
-
-    if (isAuthenticated) {
-        const userName = localStorage.getItem('userName') || 'User';
-        const firstName = userName.split('@')[0].split(' ')[0];
-
-        loginLink.innerHTML = `
-          <a href="#" onclick="showUserMenu(event)" class="user-link">
-            <i class="fas fa-user-circle"></i> ${firstName}
-          </a>`;
-    } else {
-        loginLink.innerHTML = `
-          <a class="nav-link" href="/loginSystem/login.html">
-            Login / Sign Up
-          </a>`;
     }
 }
 
@@ -441,10 +410,10 @@ function navigateToHistory() {
     const userMode = localStorage.getItem('userMode');
     
     if (userMode === 'authenticated') {
-        window.location.href = 'ScoreBoard/history.html';
+        window.location.href = '/History_Page/history.html';
     } else {
         alert('Please login first to view your match history');
-        window.location.href = '/loginSystem/login.html'; //  Fixed path
+        window.location.href = '/loginSystem/login.html';
     }
 }
 
@@ -456,24 +425,23 @@ async function logoutUser() {
     if (!confirm('Are you sure you want to logout?')) return;
 
     try {
-        // Try Firebase sign out only if Firebase is available
         if (window.firebaseAuth) {
             const { signOut } = await import("https://www.gstatic.com/firebasejs/11.10.0/firebase-auth.js");
             await signOut(window.firebaseAuth);
-            console.log("✅ Firebase sign out successful");
+            console.log(" Firebase sign out successful");
         } else {
-            console.log("⚠️ Firebase not available - local logout only");
+            console.log(" Firebase not available - local logout only");
         }
     } catch (err) {
         console.warn("Firebase sign-out failed:", err);
     }
-    ['userMode','userId','userName','guestSession','loginTimestamp','userEmail']
-        .forEach(k => localStorage.removeItem(k));
-
+    
+    cleanupExpiredSession();
     checkUserAuthAndShowNav();
     document.querySelector('.user-dropdown')?.remove();
     alert('Logged out successfully!');
 }
+
 function updateFeatureCards() {
     const historyCard = document.querySelector('.feature-card a[href*="History_Page"]');
     if (historyCard) {
@@ -483,6 +451,11 @@ function updateFeatureCards() {
         });
     }
 }
+
+window.addEventListener('resize', () => {
+    const userMode = localStorage.getItem('userMode');
+    updateUserNavigation(userMode === 'authenticated');
+});
 
 const dropdownStyle = document.createElement('style');
 dropdownStyle.textContent = `
@@ -531,6 +504,7 @@ dropdownStyle.textContent = `
         gap: 8px;
         color: #575ce5;
         font-weight: 600;
+        text-decoration: none;
     }
 `;
 document.head.appendChild(dropdownStyle);
