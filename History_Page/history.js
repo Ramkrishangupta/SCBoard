@@ -1,7 +1,40 @@
-// History Page Authentication and Data Loading
+
 class HistoryManager {
     constructor() {
-        this.checkAuthentication();
+        this.initializeFirebase();
+    }
+    
+    async initializeFirebase() {
+        try {
+            const { initializeApp } = await import("https://www.gstatic.com/firebasejs/11.10.0/firebase-app.js");
+            const { getAuth, onAuthStateChanged } = await import("https://www.gstatic.com/firebasejs/11.10.0/firebase-auth.js");
+            
+            const firebaseConfig = {
+                apiKey: "AIzaSyAjDrhV_xsfta2oo85Oi9owmGC6UH3my28",
+                authDomain: "scboard-e36a4.firebaseapp.com",
+                projectId: "scboard-e36a4",
+                storageBucket: "scboard-e36a4.firebasestorage.app",
+                messagingSenderId: "896640295836",
+                appId: "1:896640295836:web:282eb3b625e7e05070de59",
+                measurementId: "G-JW47M9LDHL"
+            };
+            
+            const app = initializeApp(firebaseConfig);
+            this.auth = getAuth(app);
+            
+            // Wait for auth state and then load matches
+            onAuthStateChanged(this.auth, (user) => {
+                if (user) {
+                    this.loadUserMatches(user.uid);
+                } else {
+                    this.checkAuthentication();
+                }
+            });
+            
+        } catch (error) {
+            console.error("❌ Firebase initialization failed:", error);
+            this.checkAuthentication();
+        }
     }
     
     checkAuthentication() {
@@ -9,7 +42,7 @@ class HistoryManager {
         const userId = localStorage.getItem('userId');
         
         if (userMode !== 'authenticated' || !userId) {
-            this.showLoginRequired();
+            this.loadLocalMatches(); // Try local first, then show login
             return;
         }
         
@@ -23,7 +56,7 @@ class HistoryManager {
                 <i class="fas fa-lock" style="font-size: 3rem; margin-bottom: 20px; color: #575ce5;"></i>
                 <h2>🔒 Login Required</h2>
                 <p style="color: #666; margin: 20px 0;">Please login to view your personal match history.</p>
-                <button onclick="window.location.href='../auth/index.html'" 
+                <button onclick="window.location.href='../loginSystem/login.html'" 
                         style="background: linear-gradient(135deg, #575ce5, #4338ca); 
                                color: white; padding: 12px 24px; border: none; 
                                border-radius: 8px; font-size: 1rem; cursor: pointer; 
@@ -31,7 +64,7 @@ class HistoryManager {
                     <i class="fas fa-sign-in-alt"></i> Go to Login
                 </button>
                 <br>
-                <button onclick="window.location.href='/HomePage/home.html'" 
+                <button onclick="window.location.href='../home.html'" 
                         style="background: transparent; color: #575ce5; padding: 12px 24px; 
                                border: 2px solid #575ce5; border-radius: 8px; font-size: 1rem; 
                                cursor: pointer; margin: 10px;">
@@ -42,7 +75,6 @@ class HistoryManager {
     }
     
     async loadUserMatches(userId) {
-        // Show loading message
         const historyList = document.getElementById('historyList');
         historyList.innerHTML = `
             <div style="text-align: center; padding: 50px; color: #575ce5;">
@@ -52,18 +84,79 @@ class HistoryManager {
         `;
         
         try {
-            const response = await fetch(`https://scboard-e36a4-default-rtdb.firebaseio.com/users/${userId}/matches.json`);
-            const data = await response.json();
+            let data = null;
             
-            if (data) {
+            // Try Firebase with authentication
+            if (this.auth && this.auth.currentUser) {
+                const idToken = await this.auth.currentUser.getIdToken(true);
+                const response = await fetch(`https://scboard-e36a4-default-rtdb.firebaseio.com/users/${userId}/matches.json?auth=${idToken}`);
+                
+                if (response.ok) {
+                    data = await response.json();
+                } else {
+                    console.warn(`⚠️ Firebase request failed: ${response.status}`);
+                }
+            }
+            
+            if (!data) {
+                console.log("🔄 Falling back to localStorage");
+                this.loadLocalMatches();
+                return;
+            }
+            
+            if (data && Object.keys(data).length > 0) {
                 this.displayMatches(data);
             } else {
                 this.showNoMatches();
             }
+            
         } catch (error) {
-            console.error('Error loading matches:', error);
+            console.error('❌ Error loading matches:', error);
+            this.loadLocalMatches(); // Fallback to local storage
+        }
+    }
+    
+    loadLocalMatches() {
+        try {
+            const localMatches = JSON.parse(localStorage.getItem('localMatches')) || [];
+            
+            if (localMatches.length > 0) {
+                
+                const matchesData = {};
+                localMatches.forEach((match, index) => {
+                    matchesData[`local_${index}`] = match;
+                });
+                
+                this.displayMatches(matchesData);
+                
+                this.showLocalMatchesNotification();
+            } else {
+                const userMode = localStorage.getItem('userMode');
+                if (userMode === 'authenticated') {
+                    this.showNoMatches();
+                } else {
+                    this.showLoginRequired();
+                }
+            }
+        } catch (error) {
+            console.error(' Error loading local matches:', error);
             this.showError();
         }
+    }
+    
+    showLocalMatchesNotification() {
+        const container = document.querySelector('.container');
+        const notification = document.createElement('div');
+        notification.style.cssText = `
+            background: #fef7ed; border: 1px solid #fed7aa; color: #9a3412;
+            padding: 12px 20px; border-radius: 8px; margin-bottom: 20px;
+            display: flex; align-items: center; gap: 10px;
+        `;
+        notification.innerHTML = `
+            <i class="fas fa-info-circle"></i>
+            <span>Showing locally saved matches. Login to access your cloud history.</span>
+        `;
+        container.insertBefore(notification, container.firstChild.nextSibling);
     }
     
     displayMatches(matchesData) {
@@ -78,7 +171,6 @@ class HistoryManager {
             return;
         }
         
-        // Update page title with match count
         const pageTitle = document.querySelector('h1');
         if (pageTitle) {
             pageTitle.textContent = `📜 Match History (${matches.length} matches)`;
@@ -107,7 +199,7 @@ class HistoryManager {
         const firstInningsOvers = match.firstInnings?.overs || "0.0";
         const secondInningsScore = match.secondInnings?.score || "Yet to bat";
         const secondInningsOvers = match.secondInnings?.overs || "0.0";
-        const tossInfo = match.tossResult || "Toss information not available";
+        
         // Handle result
         const result = match.result || "Match in progress";
         const motm = match.manOfTheMatch || "Not decided";
@@ -222,7 +314,7 @@ class HistoryManager {
                                cursor: pointer; margin: 10px;">
                     <i class="fas fa-redo"></i> Retry
                 </button>
-                <button onclick="window.location.href='../index.html'" 
+                <button onclick="window.location.href='../home.html'" 
                         style="background: transparent; color: #575ce5; padding: 12px 24px; 
                                border: 2px solid #575ce5; border-radius: 8px; font-size: 1rem; 
                                cursor: pointer; margin: 10px;">
@@ -237,7 +329,6 @@ function viewMatchDetails(matchId) {
     window.location.href = `scorecard.html?id=${matchId}`;
 }
 
-// Initialize when page loads
 document.addEventListener('DOMContentLoaded', () => {
     new HistoryManager();
 });
