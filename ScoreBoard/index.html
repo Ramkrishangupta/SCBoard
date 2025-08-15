@@ -172,6 +172,7 @@
             <div class="trophy-icon">🏆</div>
             <h2>Match Complete!</h2>
             <div id="match-result-text" class="result-text"></div>
+            <div id="motm-text" class="motm-text"></div>
         </div>
         
         <div class="modal-options">
@@ -226,7 +227,7 @@
 </div>
 
   <script type="module">
-    // ✅ Import statements at top level of module
+    
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-app.js";
     import { getAuth } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-auth.js";
 
@@ -240,33 +241,22 @@
         appId: "1:896640295836:web:282eb3b625e7e05070de59",
         measurementId: "G-JW47M9LDHL"
     };
-
-    console.log("🔥 Initializing Firebase for scoreboard...");
     
-    // Initialize Firebase
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
 
-    // ✅ Make auth available globally
     window.firebaseAuth = auth;
-    window.firebaseApp = app;
-
-    console.log("✅ Firebase initialized for scoreboard");
-    
-    // ✅ Dispatch ready event
+    window.firebaseApp = app;    
     window.dispatchEvent(new CustomEvent('firebaseReady'));
 </script>
 
-<!-- 2. Main Application Initialization Script -->
 <script>
-    // ✅ Wait for DOM and Firebase to be ready
     document.addEventListener('DOMContentLoaded', function() {
-        console.log("📄 DOM loaded for scoreboard");
+       
         
-        // Wait for Firebase to be ready
         const initializeWhenReady = () => {
             if (window.firebaseAuth) {
-                console.log("🎯 Firebase ready, initializing scoreboard...");
+                
                 try {
                     initializeApp();
                 } catch (error) {
@@ -274,16 +264,14 @@
                     alert("Error loading scoreboard. Please try again.");
                 }
             } else {
-                console.log("⏳ Waiting for Firebase...");
+              
                 setTimeout(initializeWhenReady, 100);
             }
         };
 
-        // Start initialization
         setTimeout(initializeWhenReady, 200);
     });
 
-    // ✅ Listen for Firebase ready event
     window.addEventListener('firebaseReady', () => {
         console.log("📡 Firebase ready event received");
     });
