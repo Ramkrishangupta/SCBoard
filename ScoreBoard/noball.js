@@ -3,7 +3,6 @@ let isNoBallActive = false;
 let isFreeHitActive = false;
 
 function handleNoBall() {
-    // Apply penalty run based on settings
     if (matchSettings.noballFreeHitPlusOne || matchSettings.noballPlusOneNoFreeHit) {
         totalRuns += 1;
         extras += 1;
@@ -11,11 +10,8 @@ function handleNoBall() {
             bowlers[currentBowlerIndex].runs += 1;
         }
     }
-    
-    // Set flags
     isNoBallActive = true;
     
-    // Set notification
     let notificationMessage = "NO BALL!";
     let notificationColor = "orange";
     
@@ -32,7 +28,6 @@ function handleNoBall() {
     showNotification(notificationMessage, notificationColor);
     updateScoreboard();
     
-    // Check if penalty run reached target
     if (!isFirstInnings && totalRuns >= target) {
         checkTargetReached();
     }
@@ -55,10 +50,8 @@ function checkOverCompletion() {
     }
 }
 function checkTargetReached() {
-    // !isMatchOver चेक यह सुनिश्चित करता है कि यह लॉजिक सिर्फ एक बार चले
     if (!isFirstInnings && totalRuns >= target && !isMatchOver) { 
         
-        // एक छोटा डिले ताकि UI अपडेट हो जाए
         setTimeout(() => {
             const wicketsLeft = batsmen.filter(b => !b.isOut).length;
             const resultText = `${battingTeam} won by ${wicketsLeft} wicket${wicketsLeft !== 1 ? 's' : ''}!`;
@@ -68,11 +61,11 @@ function checkTargetReached() {
             saveMatchData();
         }, 150);
         
-        return true; // हाँ, टारगेट पूरा हो गया है
+        return true; 
     }
-    return false; // नहीं, टारगेट पूरा नहीं हुआ है
+    return false; 
 }
-// Add this notification f not already present:
+
 function showNotification(message, color) {
     const notif = document.createElement("div");
     notif.className = "cricket-notification";
@@ -82,56 +75,68 @@ function showNotification(message, color) {
         </div>
     `;
     document.body.appendChild(notif);
-    // Auto-remove after 3 seconds
     setTimeout(() => {
         notif.classList.add("fade-out");
         setTimeout(() => notif.remove(), 500);
     }, 2500);
 }
 
-
-function saveMatchToFirebase(matchData) {
+async function saveMatchToFirebase(matchData) {
     const userMode = localStorage.getItem('userMode');
     const userId = localStorage.getItem('userId');
     
-    let savePath = '';
     if (userMode === 'authenticated' && userId) {
-        savePath = `users/${userId}/matches`;
+        try {
+            if (window.firebaseAuth && window.firebaseAuth.currentUser) {
+                const idToken = await window.firebaseAuth.currentUser.getIdToken(true);
+                
+                const response = await fetch(`https://scboard-e36a4-default-rtdb.firebaseio.com/users/${userId}/matches.json?auth=${idToken}`, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify(matchData)
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    showNotification("Match saved successfully!", "#00CC66");
+                } else {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+            } else {
+                throw new Error("User not authenticated");
+            }
+        } catch (error) {
+            console.error("❌ Firebase save error:", error);
+            showNotification("Failed to save match!", "#FF4444");
+            saveMatchToLocalStorage(matchData);
+        }
     } else {
-        savePath = 'guestMatches';
+        saveMatchToLocalStorage(matchData);
+        showNotification("Match saved locally!", "#FFA500");
     }
-    
-    fetch(`https://scboard-e36a4-default-rtdb.firebaseio.com/${savePath}.json`, {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json"
-        },
-        body: JSON.stringify(matchData)
-    })
-    .then(response => response.json())
-    .then(data => {
-        console.log("Match saved to Firebase:", data);
-        showNotification("Match saved successfully!", "#00CC66");
-    })
-    .catch(error => {
-        console.error("Firebase save error:", error);
-        showNotification("Failed to save match!", "#FF4444");
-    });
+}
+function saveMatchToLocalStorage(matchData) {
+    try {
+        let savedMatches = JSON.parse(localStorage.getItem('localMatches')) || [];
+        savedMatches.push(matchData);
+        localStorage.setItem('localMatches', JSON.stringify(savedMatches));
+        
+    } catch (error) {
+        console.error("❌ LocalStorage save error:", error);
+    }
 }
 
-
-// man of the match 
 function calculateManOfTheMatch(batsmenStats, bowlersStats) {
     const playerPoints = {};
 
-    // Points system
     const RUN_POINT = 1;
     const WICKET_POINT = 25;
     const CENTURY_BONUS = 50;
     const HALF_CENTURY_BONUS = 25;
     const FIVE_WICKET_HAUL_BONUS = 50;
 
-    // Har player ke liye ek entry banayein
     batsmenStats.forEach(p => {
         if (!playerPoints[p.name]) playerPoints[p.name] = { name: p.name, points: 0, runs: 0, wickets: 0 };
     });
@@ -139,13 +144,11 @@ function calculateManOfTheMatch(batsmenStats, bowlersStats) {
         if (!playerPoints[p.name]) playerPoints[p.name] = { name: p.name, points: 0, runs: 0, wickets: 0 };
     });
 
-    // Batsmen ke points calculate karein
     batsmenStats.forEach(batsman => {
         if (batsman.runs > 0) {
             playerPoints[batsman.name].runs = (playerPoints[batsman.name].runs || 0) + batsman.runs;
             playerPoints[batsman.name].points += batsman.runs * RUN_POINT;
 
-            // Bonus points
             if (batsman.runs >= 100) {
                 playerPoints[batsman.name].points += CENTURY_BONUS;
             } else if (batsman.runs >= 50) {
@@ -154,20 +157,17 @@ function calculateManOfTheMatch(batsmenStats, bowlersStats) {
         }
     });
 
-    // Bowlers ke points calculate karein
     bowlersStats.forEach(bowler => {
         if (bowler.wickets > 0) {
             playerPoints[bowler.name].wickets = (playerPoints[bowler.name].wickets || 0) + bowler.wickets;
             playerPoints[bowler.name].points += bowler.wickets * WICKET_POINT;
 
-            // Bonus points
             if (bowler.wickets >= 5) {
                 playerPoints[bowler.name].points += FIVE_WICKET_HAUL_BONUS;
             }
         }
     });
 
-    // Sabse zyada points wala player dhundein
     let manOfTheMatch = "N/A";
     let maxPoints = 0;
 
@@ -179,9 +179,7 @@ function calculateManOfTheMatch(batsmenStats, bowlersStats) {
         }
     }
     
-    // Agar koi performance nahi hai
     if(maxPoints === 0){
-        // Agar koi point nahi bana, to sabse zyada run banane wale ko de dein
         let topScorer = { name: "N/A", runs: -1 };
         batsmenStats.forEach(b => {
             if(b.runs > topScorer.runs){
@@ -199,9 +197,8 @@ function initializeRunOutButtons() {
     document.getElementById('bowler-end-btn')?.addEventListener('click', handleBowlerEndRunOut);
     document.getElementById('keeper-end-btn')?.addEventListener('click', handleKeeperEndRunOut);
 }
-// Notification function for better UX
+
 function showNotification(message, color = "#4CAF50") {
-    // Create or update notification element
     let notification = document.getElementById('game-notification');
     if (!notification) {
         notification = document.createElement('div');
@@ -225,34 +222,28 @@ function showNotification(message, color = "#4CAF50") {
     notification.style.opacity = '1';
     notification.style.transform = 'translateX(0)';
     
-    // Auto hide after 3 seconds
     setTimeout(() => {
         notification.style.opacity = '0';
         notification.style.transform = 'translateX(100%)';
     }, 3000);
 }
 
-// Global variable for winner team
 let matchWinnerTeam = "";
 
-// Modified saveMatchData function
 function saveMatchData() {
     console.log("saveMatchData function successfully called.");
 
     const matchData = createMatchDataObject();
     if (matchData) {
-        // Set winner team for next match
         if (matchData.result.includes(battingTeam)) {
             matchWinnerTeam = battingTeam;
         } else if (matchData.result.includes(bowlingTeam)) {
             matchWinnerTeam = bowlingTeam;
         } else {
-            // For tie, use first innings winner
             const firstInningsData = JSON.parse(localStorage.getItem('firstInningsData')) || {};
             matchWinnerTeam = firstInningsData.teamName || battingTeam;
         }
 
-        // Show match complete modal instead of alert
         showMatchCompleteModal(matchData);
         
         saveMatchToFirebase(matchData);
@@ -261,20 +252,26 @@ function saveMatchData() {
     }
 }
 
-// New function to show match complete modal
 function showMatchCompleteModal(matchData) {
-    // Blur background
     document.getElementById('scoreBoard').classList.add('scoreboard-blur');
     
-    // Set match result text
-    document.getElementById('match-result-text').textContent = matchData.result;
-    document.getElementById('motm-text').textContent = `Man of the Match: ${matchData.manOfTheMatch}`;
-    
-    // Update winner team name in next match options
-    document.getElementById('winner-team-name').textContent = matchWinnerTeam;
-    
-    // Show modal
-    document.getElementById('match-complete-modal').style.display = 'flex';
+    const resultElement = document.getElementById('match-result-text');
+    if (resultElement) {
+        resultElement.textContent = matchData.result;
+    }
+    const motmElement = document.getElementById('motm-text');
+    if (motmElement) {
+        motmElement.textContent = `Man of the Match: ${matchData.manOfTheMatch}`;
+    }
+    const winnerTeamElement = document.getElementById('winner-team-name');
+    if (winnerTeamElement) {
+        winnerTeamElement.textContent = matchWinnerTeam;
+    }
+
+    const modal = document.getElementById('match-complete-modal');
+    if (modal) {
+        modal.style.display = 'flex';
+    }
 }
 
 // Navigation functions
@@ -293,26 +290,21 @@ function navigateToHistory() {
     }
 }
 
-// Show next match options
 function showNextMatchOptions() {
     document.getElementById('match-complete-modal').style.display = 'none';
     document.getElementById('next-match-options-modal').style.display = 'flex';
 }
 
-// Back to match complete modal
 function backToMatchComplete() {
     document.getElementById('next-match-options-modal').style.display = 'none';
     document.getElementById('match-complete-modal').style.display = 'flex';
 }
 
-// Start next match with different options
 function startNextMatch(option) {
     const savedMatchData = JSON.parse(localStorage.getItem('matchSettings'));
     
     if (option === 'winnerBats') {
-        // Winner bats first
         if (savedMatchData) {
-            // Update saved settings - winner bats first
             if (matchWinnerTeam === savedMatchData.teamA?.name) {
                 savedMatchData.tossWinner = 'A';
                 savedMatchData.tossDecision = 'bat';
@@ -321,32 +313,25 @@ function startNextMatch(option) {
                 savedMatchData.tossDecision = 'bat';
             }
             
-            // Update batting/bowling teams
             savedMatchData.battingTeam = matchWinnerTeam === savedMatchData.teamA?.name ? savedMatchData.teamA : savedMatchData.teamB;
             savedMatchData.bowlingTeam = matchWinnerTeam === savedMatchData.teamA?.name ? savedMatchData.teamB : savedMatchData.teamA;
             
             localStorage.setItem('matchSettings', JSON.stringify(savedMatchData));
         }
         
-        // Reset and start new match
         resetForNewMatch();
         
     } else if (option === 'fromToss') {
-        // Go to toss page
         window.location.href = '/Flip-A-Coin/index.html';
         
     } else if (option === 'fromBeginning') {
-        // Go to team setup page
         window.location.href = '/Flip-A-Coin/input-team-name/index.html';
     }
 }
 
-// Reset for new match function
 function resetForNewMatch() {
-    // Clear first innings data
     localStorage.removeItem('firstInningsData');
-    
-    // Reset all match variables
+     
     totalRuns = 0;
     wickets = 0;
     overs = 0;
@@ -356,19 +341,16 @@ function resetForNewMatch() {
     target = 0;
     isMatchOver = false;
     playersSelected = false;
-    
-    // Reset player indices
+     
     strikerIndex = -1;
     nonStrikerIndex = -1;
     currentBowlerIndex = -1;
-    
-    // Re-initialize with new settings
+     
     const savedMatchData = JSON.parse(localStorage.getItem('matchSettings'));
     if (savedMatchData) {
         battingTeam = savedMatchData.battingTeam.name;
         bowlingTeam = savedMatchData.bowlingTeam.name;
-        
-        // Reset player stats
+         
         batsmen = savedMatchData.battingTeam.players.map(p => ({
             name: p, runs: 0, balls: 0, fours: 0, sixes: 0, isOut: false
         }));
@@ -377,21 +359,17 @@ function resetForNewMatch() {
             name: p, overs: 0, maidens: 0, runs: 0, wickets: 0, balls: 0
         }));
     }
-    
-    // Remove blur effect
+     
     document.getElementById('scoreBoard').classList.remove('scoreboard-blur');
-    
-    // Hide modals
+     
     document.getElementById('match-complete-modal').style.display = 'none';
     document.getElementById('next-match-options-modal').style.display = 'none';
     
-    // Update UI
     document.getElementById("batting-team-name").textContent = battingTeam;
     document.getElementById("bowling-team-name").textContent = bowlingTeam;
     document.getElementById("target-score").textContent = "-";
     document.getElementById("bowling-score").textContent = "-";
-    
-    // Enable controls
+     
     document.querySelectorAll('.run-btn').forEach(btn => btn.disabled = false);
     document.querySelectorAll('.extra-btn').forEach(btn => btn.disabled = false);
     document.querySelectorAll('.wicket-btn').forEach(btn => btn.disabled = false);
@@ -399,22 +377,18 @@ function resetForNewMatch() {
     document.querySelector('.controls').style.cursor = 'default';
     
     updateScoreboard();
-    
-    // Show player selection popup
+     
     setTimeout(() => showPlayerPopup("start"), 500);
 }
-
-// Update disableAllControls to not show alert
+ 
 function disableAllControls() {
     console.log("Match has ended. Disabling controls.");
     isMatchOver = true;
-
-    // Disable all buttons
+ 
     document.querySelectorAll('.run-btn').forEach(btn => btn.disabled = true);
     document.querySelectorAll('.extra-btn').forEach(btn => btn.disabled = true);
     document.querySelectorAll('.wicket-btn').forEach(btn => btn.disabled = true);
-    
-    // Style disabled controls
+     
     document.querySelector('.controls').style.opacity = '0.6';
     document.querySelector('.controls').style.cursor = 'not-allowed';
 }
