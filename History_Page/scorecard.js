@@ -1,51 +1,217 @@
+
+async function initializeFirebaseForScorecard() {
+    if (window.firebaseAuth) {
+        return window.firebaseAuth;
+    }
+    
+    try {
+
+        const { initializeApp } = await import("https://www.gstatic.com/firebasejs/11.10.0/firebase-app.js");
+        const { getAuth, signInWithCustomToken, onAuthStateChanged } = await import("https://www.gstatic.com/firebasejs/11.10.0/firebase-auth.js");
+        
+        const firebaseConfig = {
+            apiKey: "AIzaSyAjDrhV_xsfta2oo85Oi9owmGC6UH3my28",
+            authDomain: "scboard-e36a4.firebaseapp.com",
+            projectId: "scboard-e36a4",
+            storageBucket: "scboard-e36a4.firebasestorage.app",
+            messagingSenderId: "896640295836",
+            appId: "1:896640295836:web:282eb3b625e7e05070de59",
+            measurementId: "G-JW47M9LDHL"
+        };
+        
+        const app = initializeApp(firebaseConfig);
+        window.firebaseAuth = getAuth(app);
+        
+        return new Promise((resolve) => {
+            let resolved = false;
+            
+            const unsubscribe = onAuthStateChanged(window.firebaseAuth, (user) => {
+                if (!resolved) {
+                    console.log("🔐 Auth state ready:", user ? "authenticated" : "not authenticated");
+                    resolved = true;
+                    unsubscribe();
+                    resolve(window.firebaseAuth);
+                }
+            });
+            
+            setTimeout(() => {
+                if (!resolved) {
+                    resolved = true;
+                    unsubscribe();
+                    resolve(window.firebaseAuth);
+                }
+            }, 5000);
+        });
+        
+    } catch (error) {
+        return null;
+    }
+}
+
 window.onload = async function() {
-    // Get match ID from URL parameters
     const params = new URLSearchParams(window.location.search);
     const matchId = params.get("id");
     
-    if (!matchId || !/^[-_a-zA-Z0-9]+$/.test(matchId)) {
-        showError("Invalid Match ID - Please select a valid match from history");
+    if (!matchId) {
+        showError("Invalid Match ID");
         return;
     }
-    
+
     try {
         console.log("Fetching match data for ID:", matchId);
         
         const userId = localStorage.getItem('userId');
-        if (!userId) {
-            showError("User not authenticated. Please login first.");
+        const userMode = localStorage.getItem('userMode');
+        
+        let data = null;
+        
+        if (userMode === 'authenticated' && userId) {
+            try {
+                const auth = await initializeFirebaseForScorecard();
+                
+                if (auth) {
+                    let currentUser = auth.currentUser;
+                    let attempts = 0;
+                    const maxAttempts = 15;
+                    
+                    while (!currentUser && attempts < maxAttempts) {
+                        await new Promise(resolve => setTimeout(resolve, 500));
+                        currentUser = auth.currentUser;
+                        attempts++;
+                    }
+                    
+                    if (currentUser) {
+                        try {
+                            const idToken = await currentUser.getIdToken(true);
+                            
+                            const firebaseUrl = `https://scboard-e36a4-default-rtdb.firebaseio.com/users/${userId}/matches/${matchId}.json?auth=${idToken}`;
+                            
+                            const response = await fetch(firebaseUrl);
+                            
+                            if (response.ok) {
+                                data = await response.json();
+                            } 
+                        } catch (tokenError) {
+                        }
+                    } else {
+                    }
+                }
+            } catch (firebaseError) {
+            }
+        }
+        
+        if (!data) {
+            data = getMatchFromLocalStorage(matchId);
+        }
+        
+        if (!data) {
+            showMatchNotFoundWithOptions(matchId);
             return;
         }
         
-        const firebaseUrl = `https://scboard-e36a4-default-rtdb.firebaseio.com/users/${userId}/matches/${matchId}.json`;
-        
-        const res = await fetch(firebaseUrl);
-
-        if (res.status === 404) {
-            throw new Error(`Match not found (ID: ${matchId}). It may have been deleted.`);
-        }
-        if (!res.ok) {
-            throw new Error(`Firebase fetch failed: ${res.status} ${res.statusText}`);
-        }
-        
-        const data = await res.json();
-        
-        if (!data) {
-            throw new Error(`Match data not found for ID: ${matchId}. The match may have been deleted.`);
-        }
-        
-        console.log("Data received from Firebase:", data);
-        
-        // INSTANT rendering without delays
         renderFastScorecard(data);
         
     } catch (err) {
-        console.error("Error loading match data:", err);
         showError(err.message);
     }
 };
 
-// Modern clean error display
+function getMatchFromLocalStorage(matchId) {
+    try {
+        
+        const localMatches = JSON.parse(localStorage.getItem('localMatches')) || [];
+        
+        if (localMatches.length === 0) {
+            return null;
+        }
+        
+        let foundMatch = null;
+        
+        foundMatch = localMatches.find(match => match.id === matchId);
+        if (foundMatch) {
+            return foundMatch;
+        }
+        
+        if (matchId.startsWith('local_')) {
+            const index = parseInt(matchId.replace('local_', ''));
+            if (localMatches[index]) {
+                return localMatches[index];
+            }
+        }
+
+        foundMatch = localMatches.find(match => 
+            JSON.stringify(match).includes(matchId.substring(0, 10))
+        );
+        if (foundMatch) {
+            return foundMatch;
+        }
+        return null;
+        
+    } catch (error) {
+        return null;
+    }
+}
+
+function showMatchNotFoundWithOptions(matchId) {
+    document.body.innerHTML = `
+        <div style="
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+        ">
+            <div style="
+                background: rgba(255, 255, 255, 0.95);
+                padding: 50px;
+                border-radius: 20px;
+                text-align: center;
+                max-width: 600px;
+                box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+                backdrop-filter: blur(10px);
+                border: 1px solid rgba(255, 255, 255, 0.2);
+            ">
+                <div style="font-size: 4rem; margin-bottom: 20px;">🔍</div>
+                <h1 style="color: #1f2937; margin-bottom: 20px; font-size: 1.8rem; font-weight: 700;">
+                    Match Not Found
+                </h1>
+                <p style="font-size: 1.1rem; line-height: 1.6; margin-bottom: 20px; color: #6b7280;">
+                    Match ID: <code style="background: #f3f4f6; padding: 2px 6px; border-radius: 4px; font-family: monospace;">${matchId}</code>
+                </p>
+                <p style="margin-bottom: 30px; color: #6b7280;">
+                    This could happen if the match was saved locally or you don't have access to it.
+                </p>
+                
+                <div style="display: flex; gap: 15px; justify-content: center; flex-wrap: wrap;">
+                    <button onclick="history.back()" style="
+                        background: linear-gradient(135deg, #575ce5, #4338ca);
+                        color: white;
+                        border: none;
+                        padding: 15px 25px;
+                        border-radius: 12px;
+                        font-weight: 600;
+                        cursor: pointer;
+                        font-size: 1rem;
+                        box-shadow: 0 4px 15px rgba(87, 92, 229, 0.3);
+                    ">← Back to History</button>
+                    
+                    <button onclick="window.location.href='../home.html'" style="
+                        background: transparent;
+                        color: #575ce5;
+                        border: 2px solid #575ce5;
+                        padding: 15px 25px;
+                        border-radius: 12px;
+                        font-weight: 600;
+                        cursor: pointer;
+                        font-size: 1rem;
+                    ">🏠 Home</button>
+                </div>
+            </div>
+        </div>
+    `;
+}
+
 function showError(message) {
     document.body.innerHTML = `
         <div style="
@@ -91,11 +257,9 @@ function showError(message) {
 
 function renderFastScorecard(data) {
     try {
-        // Header information
         document.getElementById("match-heading").textContent = 
             `${data.teamAName || 'Team A'} vs ${data.teamBName || 'Team B'}`;
         
-        // Date formatting
         const matchDate = data.timestamp ? 
             new Date(data.timestamp).toLocaleString("en-IN", {
                 dateStyle: "full",
@@ -103,15 +267,12 @@ function renderFastScorecard(data) {
             }) : "Date not available";
         document.getElementById("match-date").textContent = matchDate;
         
-        // Match result
         document.getElementById("result").textContent = 
             data.result || "Result not available";
         
-        // Toss result
         document.getElementById("toss-result").textContent = 
             data.tossResult || "Toss information not recorded";
 
-        // Clean MOTM styling
         const motmElement = document.getElementById("man-of-the-match");
         if (motmElement && data.manOfTheMatch && data.manOfTheMatch !== "N/A") {
             motmElement.innerHTML = `
@@ -144,7 +305,7 @@ function renderFastScorecard(data) {
             `;
         }
 
-        // First innings rendering - FIXED: Use consistent data structure
+        // First innings rendering
         if (data.firstInnings) {
             const firstInningsTeamElement = document.getElementById("first-innings-team");
             if (firstInningsTeamElement) {
@@ -153,7 +314,7 @@ function renderFastScorecard(data) {
             renderInnings("first", data.firstInnings, data.teamBName || "Team B");
         }
 
-        // Second innings rendering - FIXED: Use consistent data structure
+        // Second innings rendering
         const secondInningsSection = document.getElementById("second-innings");
         if (secondInningsSection) {
             if (data.secondInnings) {
@@ -167,8 +328,6 @@ function renderFastScorecard(data) {
                 secondInningsSection.style.display = 'none';
             }
         }
-        
-        console.log("Scorecard rendered successfully");
         
     } catch (error) {
         console.error("Error rendering scorecard:", error);
@@ -265,7 +424,6 @@ function generateBattingTable(players) {
         </table>`;
 }
 
-// CLEAN bowling table
 function generateBowlingTable(players) {
     if (!players || !Array.isArray(players) || players.length === 0) {
         return `<p style="text-align: center; padding: 20px; color: #6b7280; font-style: italic;">⚡ No bowling data available</p>`;
