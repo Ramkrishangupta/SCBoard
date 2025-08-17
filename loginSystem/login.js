@@ -1,4 +1,3 @@
-
 class SCBoardAuth {
     constructor() {
         this.auth = null;
@@ -7,13 +6,14 @@ class SCBoardAuth {
         this.initializeAuth();
     }
 
+    isValidEmail(email) {
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        return emailRegex.test(email);
+    }
+
     async initializeAuth() {
-        try {
-            console.log("🔥 Starting Firebase Auth initialization...");
-            
-            // Wait for Firebase to be ready
+        try {            
             await this.waitForFirebase();
-            
             this.auth = window.firebaseAuth;
             
             if (!this.auth) {
@@ -21,11 +21,10 @@ class SCBoardAuth {
             }
             
             this.isInitialized = true;
-            console.log(' Firebase Auth connected successfully');
             this.init();
             
         } catch (error) {
-            console.error(' Firebase initialization error:', error);
+            console.error('❌ Firebase initialization error:', error);
             this.handleInitializationError();
         }
     }
@@ -34,7 +33,6 @@ class SCBoardAuth {
         return new Promise((resolve, reject) => {
             const handleFirebaseReady = () => {
                 if (window.firebaseAuth) {
-                    console.log(" Firebase ready via event");
                     resolve();
                     return;
                 }
@@ -47,11 +45,9 @@ class SCBoardAuth {
             
             const checkFirebase = () => {
                 attempts++;
-                console.log(`🔍 Checking Firebase... Attempt ${attempts}`);
                 
                 if (window.firebaseAuth) {
                     window.removeEventListener('firebaseReady', handleFirebaseReady);
-                    console.log("✅ Firebase ready via polling");
                     resolve();
                 } else if (attempts >= maxAttempts) {
                     window.removeEventListener('firebaseReady', handleFirebaseReady);
@@ -64,6 +60,7 @@ class SCBoardAuth {
             setTimeout(checkFirebase, 200);
         });
     }
+
     init() {
         if (!this.isInitialized || !this.auth) {
             console.error('Cannot initialize - Firebase Auth not ready');
@@ -76,7 +73,6 @@ class SCBoardAuth {
 
     setupEventListeners() {
         if (!document.getElementById('loginForm') || !document.getElementById('signupForm')) {
-            console.log('📄 Not on login page - skipping UI event listeners');
             return;
         }
 
@@ -87,7 +83,6 @@ class SCBoardAuth {
                 }
             });
 
-            // Form submissions with null checks
             const loginForm = document.getElementById('loginForm');
             const signupForm = document.getElementById('signupForm');
 
@@ -105,7 +100,13 @@ class SCBoardAuth {
                 });
             }
 
-            console.log('✅ Event listeners setup complete');
+            const forgotPasswordLink = document.getElementById('forgotPasswordLink');
+            if (forgotPasswordLink) {
+                forgotPasswordLink.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    this.handleForgotPassword();
+                });
+            }
             
         } catch (error) {
             console.error('❌ Error setting up event listeners:', error);
@@ -118,16 +119,24 @@ class SCBoardAuth {
             return;
         }
 
-        const email = document.getElementById('loginEmail')?.value;
+        const email = document.getElementById('loginEmail')?.value.trim();
         const password = document.getElementById('loginPassword')?.value;
+        
         if (!email || !password) {
             this.showNotification('Please enter both email and password', 'error');
             return;
         }
+
+        if (!this.isValidEmail(email)) {
+            this.showNotification('Please enter a valid email address', 'error');
+            return;
+        }
+
         this.showLoading(true);
         
         try {
             const { signInWithEmailAndPassword } = await import("https://www.gstatic.com/firebasejs/11.10.0/firebase-auth.js");
+            
             const userCredential = await signInWithEmailAndPassword(this.auth, email, password);
             
             localStorage.setItem('userMode', 'authenticated');
@@ -140,9 +149,73 @@ class SCBoardAuth {
                 window.location.href = '../HomePage/home.html';
             }, 1500);
             
-        }  catch (error) {
-            console.error('Login error:', error);
-            this.showNotification(this.getErrorMessage(error.code), 'error');
+        } catch (error) {
+            console.error('Login error details:', error);
+            
+            let errorMessage = 'Login failed. Please try again.';
+            
+            if (error.code === 'auth/invalid-credential') {
+                errorMessage = 'Invalid email or password. Please check your credentials.';
+            } else if (error.code === 'auth/too-many-requests') {
+                errorMessage = 'Too many failed attempts. Please try again later or reset your password.';
+            } else if (error.code === 'auth/user-not-found') {
+                errorMessage = 'No account found with this email. Please sign up first.';
+            } else if (error.code === 'auth/network-request-failed') {
+                errorMessage = 'Network error. Please check your internet connection.';
+            }
+            
+            this.showNotification(errorMessage, 'error');
+        } finally {
+            this.showLoading(false);
+        }
+    }
+
+    // forgot password function
+    async handleForgotPassword() {
+        const email = document.getElementById('loginEmail')?.value.trim();
+        
+        if (!email) {
+            this.showNotification('Please enter your email address first', 'error');
+            document.getElementById('loginEmail').focus();
+            return;
+        }
+
+        if (!this.isValidEmail(email)) {
+            this.showNotification('Please enter a valid email address', 'error');
+            return;
+        }
+
+        if (!confirm(`Send password reset email to ${email}?`)) {
+            return;
+        }
+
+        this.showLoading(true);
+
+        try {
+            const { sendPasswordResetEmail } = await import("https://www.gstatic.com/firebasejs/11.10.0/firebase-auth.js");
+            
+            await sendPasswordResetEmail(this.auth, email);
+            
+            this.showNotification('Password reset email sent! Check your inbox.', 'success');
+            
+            setTimeout(() => {
+                this.showNotification('Check spam folder if you don\'t see the email', 'info');
+            }, 3000);
+            
+        } catch (error) {
+            console.error('Password reset error:', error);
+            
+            let errorMessage = 'Failed to send reset email. Please try again.';
+            
+            if (error.code === 'auth/user-not-found') {
+                errorMessage = 'No account found with this email address.';
+            } else if (error.code === 'auth/invalid-email') {
+                errorMessage = 'Invalid email address.';
+            } else if (error.code === 'auth/too-many-requests') {
+                errorMessage = 'Too many requests. Please wait before trying again.';
+            }
+            
+            this.showNotification(errorMessage, 'error');
         } finally {
             this.showLoading(false);
         }
@@ -214,9 +287,7 @@ class SCBoardAuth {
     }
 
     checkAuthState() {
-        // ✅ Only check auth state if Firebase is available
         if (!this.auth) {
-            console.log('⚠️ Firebase Auth not available for state check');
             return;
         }
 
@@ -234,7 +305,6 @@ class SCBoardAuth {
                             localStorage.setItem('userName', user.displayName || user.email);
                             localStorage.setItem('loginTimestamp', Date.now().toString());
                             this.currentUser = user;
-                            console.log('✅ User is signed in:', user.email);
                         } else {
                             this.currentUser = null;
                             console.log('User is signed out');
@@ -278,9 +348,21 @@ class SCBoardAuth {
         
         const notification = document.createElement('div');
         notification.className = `auth-notification ${type}`;
+        
+        let icon = 'fa-check-circle';
+        let bgColor = 'linear-gradient(135deg, #00CC66, #00AA55)';
+        
+        if (type === 'error') {
+            icon = 'fa-exclamation-circle';
+            bgColor = 'linear-gradient(135deg, #FF4444, #CC3333)';
+        } else if (type === 'info') {
+            icon = 'fa-info-circle';
+            bgColor = 'linear-gradient(135deg, #4A90E2, #357ABD)';
+        }
+        
         notification.innerHTML = `
             <div class="notification-content">
-                <i class="fas ${type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle'}"></i>
+                <i class="fas ${icon}"></i>
                 <span>${message}</span>
             </div>
         `;
@@ -296,7 +378,7 @@ class SCBoardAuth {
             font-weight: 500;
             box-shadow: 0 4px 15px rgba(0,0,0,0.2);
             animation: slideInRight 0.5s ease-out;
-            background: ${type === 'success' ? 'linear-gradient(135deg, #00CC66, #00AA55)' : 'linear-gradient(135deg, #FF4444, #CC3333)'};
+            background: ${bgColor};
         `;
         
         const style = document.createElement('style');
@@ -322,8 +404,9 @@ class SCBoardAuth {
         setTimeout(() => {
             notification.style.animation = 'slideInRight 0.5s ease-out reverse';
             setTimeout(() => notification.remove(), 500);
-        }, 3500);
+        }, 4000);
     }
+
 
     getErrorMessage(errorCode) {
         const errors = {
@@ -359,7 +442,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 async function validateUserSession() {
     const userId = localStorage.getItem('userId');
-    const userMode = localStorage.getItem('userMode'); // ✅ Changed from userEmail to userMode
+    const userMode = localStorage.getItem('userMode'); //  Changed from userEmail to userMode
     const loginTimestamp = localStorage.getItem('loginTimestamp');
     
     // Check if user has ever been authenticated
@@ -375,7 +458,6 @@ async function validateUserSession() {
         const sessionDuration = 24 * 60 * 60 * 1000; // 24 hours
         
         if (loginTimestamp && (currentTime - parseInt(loginTimestamp)) > sessionDuration) {
-            console.log("⏰ Session expired for authenticated user");
             return 'expired';
         }
         
@@ -385,11 +467,8 @@ async function validateUserSession() {
             const response = await fetch(userCheckUrl);
             
             if (!response.ok || !await response.json()) {
-                console.log("❌ User not found in database");
                 return 'expired';
             }
-            
-            console.log("✅ User session validated");
             return true;
             
         } catch (error) {
@@ -397,8 +476,6 @@ async function validateUserSession() {
             return 'expired';
         }
     }
-    
-    console.log("👻 Guest user - allow access");
     return true;
 }
 
